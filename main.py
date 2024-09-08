@@ -1,151 +1,83 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from datetime import datetime
-import random as rn
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
-        
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QLineEdit, QComboBox, QSpinBox, QWidget
+from PyQt5.QtGui import QFont
 
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(40, 70, 81, 31))
-        self.label.setObjectName("label")
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(220, 500, 151, 31))
-        self.pushButton.setObjectName("pushButton")
+        # Set window properties
+        self.setWindowTitle("Movie Billing System")
+        self.setGeometry(0, 0, 800, 600)
 
-        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit.setGeometry(QtCore.QRect(30, 110, 113, 22))
-        self.lineEdit.setObjectName("lineEdit")
+        # Create central widget
+        self.centralwidget = QWidget()
+        self.setCentralWidget(self.centralwidget)
 
-        self.lineEdit_2 = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_2.setGeometry(QtCore.QRect(230, 110, 113, 22))
-        self.lineEdit_2.setObjectName("lineEdit_2")
+        # Create UI elements
+        self.label_title = QLabel("MOVIE BILLING SYSTEM", self.centralwidget)
+        self.label_title.setGeometry(220, 0, 361, 41)
+        self.label_title.setFont(QFont("MS Shell Dlg 2", 20))
 
-        self.lineEdit_3 = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_3.setGeometry(QtCore.QRect(420, 110, 113, 22))
-        self.lineEdit_3.setObjectName("lineEdit_3")
+        self.label_name = QLabel("NAME", self.centralwidget)
+        self.label_name.setGeometry(40, 70, 81, 31)
+        self.lineEdit_name = QLineEdit(self.centralwidget)
+        self.lineEdit_name.setGeometry(30, 110, 113, 22)
 
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(250, 70, 81, 31))
-        self.label_2.setObjectName("label_2")
+        self.label_phone = QLabel("PHONE NO", self.centralwidget)
+        self.label_phone.setGeometry(600, 70, 81, 31)
+        self.lineEdit_phone = QLineEdit(self.centralwidget)
+        self.lineEdit_phone.setGeometry(600, 110, 113, 22)
 
-        self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(440, 70, 81, 31))
-        self.label_3.setObjectName("label_3")
+        self.label_movie_selector = QLabel("MOVIE SELECTOR", self.centralwidget)
+        self.label_movie_selector.setGeometry(290, 150, 271, 41)
+        self.label_movie_selector.setFont(QFont("MS Shell Dlg 2", 20))
+        self.comboBox_movies = QComboBox(self.centralwidget)
+        self.comboBox_movies.setGeometry(140, 200, 511, 22)
+        self.comboBox_movies.addItems(["MOVIE-1", "MOVIE-2", "MOVIE-3", "MOVIE-4"])
 
-        self.line = QtWidgets.QFrame(self.centralwidget)
-        self.line.setGeometry(QtCore.QRect(570, 50, 31, 491))
-        self.line.setFrameShape(QtWidgets.QFrame.VLine)
-        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line.setObjectName("line")
+        self.label_no_of_tickets = QLabel("NO OF TICKET", self.centralwidget)
+        self.label_no_of_tickets.setGeometry(340, 240, 121, 41)
+        self.spinBox_tickets = QSpinBox(self.centralwidget)
+        self.spinBox_tickets.setGeometry(480, 250, 42, 22)
 
-        self.line_2 = QtWidgets.QFrame(self.centralwidget)
-        self.line_2.setGeometry(QtCore.QRect(0, 140, 581, 16))
-        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
-        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line_2.setObjectName("line_2")
+        self.label_price_per_ticket = QLabel("PRICE PER TICKET", self.centralwidget)
+        self.label_price_per_ticket.setGeometry(310, 290, 141, 41)
+        self.label_price_per_ticket_value = QLabel("TextLabel", self.centralwidget)
+        self.label_price_per_ticket_value.setGeometry(480, 290, 101, 41)
 
-        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_2.setGeometry(QtCore.QRect(610, 500, 151, 31))
-        self.pushButton_2.setObjectName("pushButton_2")
+        self.label_total_price = QLabel("TOTAL PRICE", self.centralwidget)
+        self.label_total_price.setGeometry(340, 350, 141, 41)
+        self.label_total_price_value = QLabel("TextLabel", self.centralwidget)
+        self.label_total_price_value.setGeometry(480, 350, 101, 41)
 
-        self.dateTimeEdit = QtWidgets.QDateTimeEdit(self.centralwidget)
-        self.dateTimeEdit.setGeometry(QtCore.QRect(10, 500, 131, 22))
-        self.dateTimeEdit.setObjectName("dateTimeEdit")
-        current_datetime = datetime.now()
-        qt_datetime = QtCore.QDateTime(current_datetime.year, current_datetime.month, current_datetime.day,
-                                       current_datetime.hour, current_datetime.minute, current_datetime.second)
+        self.button_submit = QPushButton("SUBMIT", self.centralwidget)
+        self.button_submit.setGeometry(340, 490, 151, 31)
+        self.button_submit.clicked.connect(self.calculate_total)
 
-        self.dateTimeEdit.setDateTime(qt_datetime)
+    def calculate_total(self):
+        # Implement your calculation logic here
+        # Get selected movie and number of tickets
+        selected_movie = self.comboBox_movies.currentText()
+        num_tickets = self.spinBox_tickets.value()
 
-        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
-        self.comboBox.setGeometry(QtCore.QRect(30, 210, 511, 22))
-        self.comboBox.setObjectName("comboBox")
-        self.comboBox.addItem("MOVIE-1")
-        self.comboBox.addItem("MOVIE-2")
-        self.comboBox.addItem("MOVIE-3")
-        self.comboBox.addItem("MOVIE-4")
+        # Determine price per ticket based on selected movie
+        price_per_ticket = 0  # Replace with actual pricing logic
+        if selected_movie == "MOVIE-1":
+            price_per_ticket = 100
+        elif selected_movie == "MOVIE-2":
+            price_per_ticket = 150
+        # ... add more movie pricing conditions
 
-        self.spinBox = QtWidgets.QSpinBox(self.centralwidget)
-        self.spinBox.setGeometry(QtCore.QRect(200, 260, 42, 22))
-        self.spinBox.setObjectName("spinBox")
+        # Calculate total price
+        total_price = price_per_ticket * num_tickets
 
-        self.label_5 = QtWidgets.QLabel(self.centralwidget)
-        self.label_5.setGeometry(QtCore.QRect(220, 0, 361, 41))
-        self.label_5.setStyleSheet("font: 75 20pt 'MS Shell Dlg 2';")
-        self.label_5.setObjectName("label_5")
-
-        self.label_6 = QtWidgets.QLabel(self.centralwidget)
-        self.label_6.setGeometry(QtCore.QRect(640, 80, 71, 41))
-        self.label_6.setStyleSheet("font: 75 20pt 'MS Shell Dlg 2';")
-        self.label_6.setObjectName("label_6")
-
-        self.label_7 = QtWidgets.QLabel(self.centralwidget)
-        self.label_7.setGeometry(QtCore.QRect(30, 330, 141, 41))
-        self.label_7.setStyleSheet("font: 10pt 'MS Shell Dlg 2';")
-        self.label_7.setObjectName("label_7")
-
-        self.label_8 = QtWidgets.QLabel(self.centralwidget)
-        self.label_8.setGeometry(QtCore.QRect(170, 160, 271, 41))
-        self.label_8.setStyleSheet("font: 75 20pt 'MS Shell Dlg 2';")
-        self.label_8.setObjectName("label_8")
-
-        self.label_9 = QtWidgets.QLabel(self.centralwidget)
-        self.label_9.setGeometry(QtCore.QRect(30, 250, 121, 41))
-        self.label_9.setStyleSheet("font: 10pt 'MS Shell Dlg 2';")
-        self.label_9.setObjectName("label_9")
-
-        self.lineEdit_4 = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_4.setGeometry(QtCore.QRect(190, 340, 113, 22))
-        self.lineEdit_4.setObjectName("lineEdit_4")
-
-        self.plainTextEdit = QtWidgets.QPlainTextEdit(self.centralwidget)
-        self.plainTextEdit.setGeometry(QtCore.QRect(600, 140, 181, 341))
-        self.plainTextEdit.setObjectName("plainTextEdit")
-
-        self.lcdNumber = QtWidgets.QLCDNumber(self.centralwidget)
-        self.lcdNumber.setGeometry(QtCore.QRect(20, 0, 91, 51))
-        self.lcdNumber.setObjectName("lcdNumber")
-        r = rn.randint(1,1000)
-        self.lcdNumber.display(r)
-        MainWindow.setCentralWidget(self.centralwidget)
-
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
-        self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
-
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
-
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "   NAME"))
-        self.pushButton.setText(_translate("MainWindow", "SUBMIT"))
-        self.label_2.setText(_translate("MainWindow", "PHONE NO"))
-        self.label_3.setText(_translate("MainWindow", "BILL NO"))
-        self.pushButton_2.setText(_translate("MainWindow", "PRINT"))
-        self.label_5.setText(_translate("MainWindow", "MOVIE BILLING SYSTEM"))
-        self.label_6.setText(_translate("MainWindow", "BILL"))
-        self.label_7.setText(_translate("MainWindow", "PRICE PER TICKET"))
-        self.label_8.setText(_translate("MainWindow", "MOVIE SELECTOR"))
-        self.label_9.setText(_translate("MainWindow", "NO OF TICKET"))
-
+        # Update labels
+        self.label_price_per_ticket_value.setText(f"{price_per_ticket}")
+        self.label_total_price_value.setText(f"{total_price}")
 
 if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
     sys.exit(app.exec_())
