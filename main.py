@@ -1,4 +1,3 @@
-import pywhatkit as pwk
 import tkinter
 from tkinter import ttk
 from tkinter import messagebox
@@ -6,12 +5,12 @@ from docxtpl import DocxTemplate
 import datetime
 import random
 from docx2pdf import convert
-import pandas as pd
 
 window = tkinter.Tk()
-window.title("CAFE - Billing System")
-window.geometry('1024x768')
-window.configure(bg='#f0f8ff')
+window.title("Billing System")
+#window.geometry('900x600')  # Initial window size
+window.geometry('1024x768')  # Initial window size
+window.configure(bg='#f0f8ff')  # Light background color
 
 # Configure grid weights to make the window resizable
 window.columnconfigure(0, weight=1)
@@ -21,8 +20,9 @@ window.rowconfigure([1, 2], weight=1)
 def update_time():
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     time_label.config(text=current_time)
-    window.after(1000, update_time)
-
+    window.after(1000, update_time)  # Update time every 1 second
+    
+    
 now = datetime.datetime.now()
 year = now.year
 month = now.month
@@ -30,8 +30,8 @@ day = now.day
 hour = now.hour
 minute = now.minute
 
-date = f"{day}{month}{year}"
-time = f"{hour}:{minute}"
+date= f"{day}_{month}_{year}"
+time= f"{hour}:{minute}"
 
 # Top frame for Welcome Message and Date/Time
 top_frame = tkinter.Frame(window, bg='#4682B4', padx=10, pady=10)
@@ -75,12 +75,22 @@ menu_frame.grid(row=2, column=0, padx=20, pady=10, sticky="nsew")
 # Configure grid in menu frame
 menu_frame.columnconfigure([0, 1, 2], weight=1)
 
-# Load item data from an Excel sheet
+################ item dict ##########################################
+
 df = pd.read_excel('billing_items.xlsx')
+# Set the "Item Name" column as the index
 df.set_index('Item Name', inplace=True)
+# Convert the DataFrame to a dictionary with index orientation
 item_dict = df.to_dict(orient='index')
+# Extract the prices from the inner dictionaries
 for item, data in item_dict.items():
-    item_dict[item] = data['Price']
+    item_dict[item] = data['Price']  # Assuming the price column is named 'Price'
+
+##########################################################
+# item_dict = {"Panner Sabji": 100,
+#              "Panner Tikka": 120,
+#              "Palak Panner": 130,
+#              "Mater Panner Sabji": 150}
 
 billnumber = random.randint(1000, 9999)
 
@@ -114,7 +124,7 @@ def add_item():
     tree.insert('', 0, values=invoice_item)
     clear_item()
     invoice_list.append(invoice_item)
-    update_total()
+    update_total()  # Update total after adding item
 
 def new_invoice():
     first_name_entry.delete(0, tkinter.END)
@@ -122,100 +132,64 @@ def new_invoice():
     clear_item()
     tree.delete(*tree.get_children())
     invoice_list.clear()
-    update_total()
+    update_total()  # Reset total to 0
 
 def generate_invoice():
     now = datetime.datetime.now()
-    date = now.strftime("%Y-%m-%d")
-    time = now.strftime("%H:%M")
+    year = now.year
+    month = now.month
+    day = now.day
+    hour = now.hour
+    minute = now.minute
+    date= f"{day}_{month}_{year}"
+    time= f"{hour}:{minute}"
     
+    doc = DocxTemplate("invoice1.docx")
     name = first_name_entry.get()
     phone = phone_number_entry.get()
     subtotal = sum(item[3] for item in invoice_list)
-#     salestax = 0.1
-    total = subtotal # * (1 + salestax)
+    salestax = 0.1
+    total = subtotal * (1 + salestax)
+    doc.render({"name": name,
+                "phone": phone,
+                "invoice_list": invoice_list,
+                "subtotal": subtotal,
+                "salestax": str(salestax * 100) + "%",
+                "total": total})
     
-#     doc = DocxTemplate("invoice1.docx")
-#     doc.render({
-#         "name": name,
-#         "phone": phone,
-#         "invoice_list": invoice_list,
-#         "subtotal": subtotal,
-#         "salestax": f"{salestax * 100}%",
-#         "total": total
-#     })
-#     doc_name = f"{name}{date}{time}.docx"
+#     # Save the invoice as a .docx file
+#     doc_name = name + " " + datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S") + ".docx"
 #     doc.save(doc_name)
-#     convert(doc_name)
     
-#    messagebox.showinfo("Success", f"Invoice generated and saved as {doc_name}")
+#     # Convert the .docx file to a .pdf file
+#     pdf_name = doc_name.replace(".docx", ".pdf")
+#     convert(doc_name, pdf_name)  # Save as PDF
     
-    # Save to Excel
+#     #####################################
+#     # Save the invoice as a .docx file
+#     doc_name = name + " " + date + "_" + time + ".docx"
+#     doc.save(doc_name)
+    
+#     # Convert the .docx file to a .pdf file
+#     pdf_name = doc_name.replace(".docx", ".pdf")
+#     convert(doc_name, pdf_name)  # Save as PDF
+#     #####################################
+    doc_name = name + " " + date + "_" + time + ".docx"
+    doc.save(doc_name)
+    pdf_name = name + " " + date + "_" + time + ".docx"
+    convert(pdf_name)
+    
+    messagebox.showinfo("Success", f"Invoice generated and saved as {pdf_name}")
+    
+    #################### save to excel ############
+    
     df = pd.read_excel('billing_details.xlsx')
     serialNo = len(df) + 1
-    new_row = {
-        "Serial_number": serialNo, "Bill_number": billnumber, "Name": name, "Phone_number": phone,
-        "Items": invoice_list, "Amount": total, "Date": date, "Time": time
-    }
-    df = df.append(new_row, ignore_index=True)
+    new_row = {"Serial_number":serialNo,"Bill_number": billnumber, "Name": name, "Phone_number": phone ,"Items": invoice_list, "Amount":total, "Date":date,"Time":time}
+                # Append the new row to the DataFrame
+    df = df.append(new_row, ignore_index=True)  # ignore_index avoids duplicate row indexing
     df.to_excel('billing_details.xlsx', index=False)
     
-#     # Send invoice via WhatsApp
-#     send_invoice_via_whatsapp(phone, name, total)
-
-def send_invoice_via_whatsapp():
-    now = datetime.datetime.now()
-    hour = now.hour
-    minute = now.minute+2
-    name = first_name_entry.get()
-    phone = phone_number_entry.get()
-    subtotal = sum(item[3] for item in invoice_list)
-#     salestax = 0.1
-    total = subtotal # * (1 + salestax)
-    
-    phonenumber = "+91"+str(phone)
-    # Format the message
-    message = f"Hello {name},\nitems are : \n{invoice_list}\nYour total bill is {total} INR.\nThank you for your purchase!"
-    
-    # Send message
-    pwk.sendwhatmsg(phonenumber, message, hour , minute + 1)
-def send_invoice_via_email():
-    name = first_name_entry.get()
-    phone = phone_number_entry.get()
-    subtotal = sum(item[3] for item in invoice_list)
-    total = subtotal  # If you plan to add sales tax, update this line
-    recipient_email = "ayusharm4999@gmail.com"  # Replace with recipient's email
-
-    # Email content
-    email_subject = f"Invoice from CAFE - {name}"
-    email_body = f"Hello {name},\n\nHere is your invoice:\n\nItems Purchased:\n"
-    
-    # Adding items to the email body
-    for item in invoice_list:
-        email_body += f"- {item[0]} (Qty: {item[1]}, Price: {item[2]} INR, Total: {item[3]} INR)\n"
-    
-    email_body += f"\nTotal Bill: {total} INR\n\nThank you for visiting CAFE!"
-
-    # Create email message
-    msg = MIMEMultipart()
-    msg['From'] = "ayusharma4999@gmail.com"  # Replace with your email
-    msg['To'] = recipient_email
-    msg['Subject'] = email_subject
-
-    # Attach the email body
-    msg.attach(MIMEText(email_body, 'plain'))
-
-    # Email credentials and sending logic
-    try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login("ayusharma4999@gmail.com", "Password")  # Replace with your email and password
-        text = msg.as_string()
-        server.sendmail("ayusharma4999@gmail.com", recipient_email, text)
-        server.quit()
-        messagebox.showinfo("Success", "Invoice sent successfully via email!")
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to send email: {str(e)}")
 
 def delete_item():
     selected_item = tree.selection()
@@ -226,7 +200,7 @@ def delete_item():
             if item[0] == item_values[0] and item[1] == int(item_values[1]):
                 invoice_list.remove(item)
                 break
-        update_total()
+        update_total()  # Update total after deleting item
 
 # Dropdown and spinbox for menu items in Menu Frame
 desc_label_main = tkinter.Label(menu_frame, text="Main Course", bg='#f0f8ff', font=("Arial", 10, "bold"))
@@ -240,52 +214,49 @@ qty_spinbox_main = tkinter.Spinbox(menu_frame, from_=1, to=10, increment=1)
 qty_spinbox_main.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
 # Add Item Button
-add_item_button = tkinter.Button(menu_frame, text="Add Item", command=add_item, bg='#4682B4', fg='white')
-add_item_button.grid(row=1, column=2, padx=10, pady=5, sticky="ew")
+add_item_button = tkinter.Button(menu_frame, text="Add Item", command=add_item, bg='#4682B4', fg='white', font=("Arial", 10, "bold"))
+add_item_button.grid(row=1, column=2, padx=10, pady=5)
 
-# Billing Frame
+# Billing Summary Frame
 billing_frame = tkinter.LabelFrame(window, text="Billing Summary", padx=10, pady=10, bg='#f0f8ff', font=("Arial", 12, "bold"))
 billing_frame.grid(row=3, column=0, padx=20, pady=10, sticky="nsew")
 
-# Configure grid for billing frame
-billing_frame.columnconfigure([0, 1], weight=1)
-
-# TreeView to display selected items
-columns = ("Description", "Qty", "Price", "Total")
+# Treeview for billing summary
+columns = ('desc', 'qty', 'price', 'total')
 tree = ttk.Treeview(billing_frame, columns=columns, show="headings")
-tree.heading("Description", text="Description")
-tree.heading("Qty", text="Qty")
-tree.heading("Price", text="Price")
-tree.heading("Total", text="Total")
-tree.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+tree.heading('desc', text='Description')
+tree.heading('qty', text='Qty')
+tree.heading('price', text='Price')
+tree.heading('total', text='Total')
+tree.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-# Scrollbar for the TreeView
+# Scrollbar for Treeview
 scrollbar = ttk.Scrollbar(billing_frame, orient="vertical", command=tree.yview)
-scrollbar.grid(row=0, column=1, sticky="ns")
+scrollbar.grid(row=0, column=1, sticky='ns')
 tree.configure(yscrollcommand=scrollbar.set)
 
-# Total label
+# Label to display the total amount
 total_label = tkinter.Label(billing_frame, text="Total: 0 INR", bg='#f0f8ff', font=("Arial", 12, "bold"))
-total_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+total_label.grid(row=1, column=0, padx=10, pady=10, sticky="ewns")
 
-# Button Frame
+# Frame for action buttons (Save, New Invoice, Delete)
 button_frame = tkinter.Frame(window, bg='#f0f8ff')
-button_frame.grid(row=4, column=0, padx=20, pady=10, sticky="ewns")
+button_frame.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
 
-# Invoice buttons
-delete_button = tkinter.Button(button_frame, text="Delete Item", command=delete_item, bg='#ff6347', fg='white')
-delete_button.grid(row=0, column=0, padx=10, pady=5)
+# Save Invoice Button
+save_invoice_button = tkinter.Button(button_frame, text="Generate Invoice", command=generate_invoice, bg='#32CD32', fg='white', font=("Arial", 10, "bold"))
+save_invoice_button.pack(side="left", padx=10, pady=5, anchor="center", expand=True)
 
-new_invoice_button = tkinter.Button(button_frame, text="New Invoice", command=new_invoice, bg='#4682B4', fg='white')
-new_invoice_button.grid(row=0, column=1, padx=10, pady=5)
+# New Invoice Button
+new_invoice_button = tkinter.Button(button_frame, text="New Invoice", command=new_invoice, bg='#4682B4', fg='white', font=("Arial", 10, "bold"))
+new_invoice_button.pack(side="left", padx=10, pady=5, anchor="center", expand=True)
 
-generate_button = tkinter.Button(button_frame, text="Generate Invoice", command=generate_invoice, bg='#32cd32', fg='white')
-generate_button.grid(row=0, column=2, padx=10, pady=5)
+# Delete Item Button
+delete_item_button = tkinter.Button(button_frame, text="Delete Item", command=delete_item, bg='#FF6347', fg='white', font=("Arial", 10, "bold"))
+delete_item_button.pack(side="left", padx=10, pady=5, anchor="center", expand=True)
 
-whatsapp_button = tkinter.Button(button_frame, text="WhatsApp", command=send_invoice_via_whatsapp, bg='#32cd32', fg='white')
-whatsapp_button.grid(row=0, column=3, padx=10, pady=5)
-
-email_button = tkinter.Button(button_frame, text="Email", command=send_invoice_via_email, bg='#32cd32', fg='white')
-email_button.grid(row=0, column=4, padx=10, pady=5)
+# Make sure the billing frame and treeview expand correctly
+billing_frame.rowconfigure(0, weight=1)
+billing_frame.columnconfigure(0, weight=1)
 
 window.mainloop()
